@@ -1,0 +1,28 @@
+# Maven / Java
+target/
+*.jar
+
+# Gradle / Android
+.gradle/
+build/
+**/.gradle/
+**/build/
+*.apk
+*.aab
+
+# Local SDK and machine-specific files
+local.properties
+**/local.properties
+
+# Release signing secrets
+*.jks
+*.keystore
+android/keystore/*.properties
+android/keystore/*.jks
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+Thumbs.db
+.DS_Store

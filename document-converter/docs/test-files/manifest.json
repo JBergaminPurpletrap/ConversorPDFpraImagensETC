@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-06-19",
+  "cases": [
+    {
+      "id": "image-single-jpg",
+      "input": "input/images/foto_simples.jpg",
+      "feature": "IMAGE_TO_PDF",
+      "platforms": ["android", "desktop"],
+      "expected": "PDF com 1 pagina"
+    },
+    {
+      "id": "image-multiple-mixed",
+      "input": "input/images/varias_imagens/",
+      "feature": "IMAGE_TO_PDF",
+      "platforms": ["android", "desktop"],
+      "expected": "PDF multipagina mantendo a ordem selecionada"
+    },
+    {
+      "id": "pdf-single-page",
+      "input": "input/pdf/pdf_uma_pagina.pdf",
+      "feature": "PDF_TO_IMAGE",
+      "platforms": ["android", "desktop"],
+      "expected": "1 imagem gerada"
+    },
+    {
+      "id": "pdf-multipage",
+      "input": "input/pdf/pdf_multipagina.pdf",
+      "feature": "PDF_TO_IMAGE",
+      "platforms": ["android", "desktop"],
+      "expected": "Uma imagem por pagina"
+    },
+    {
+      "id": "pdf-password",
+      "input": "input/pdf/pdf_protegido_senha_1234.pdf",
+      "feature": "PDF_PASSWORD",
+      "platforms": ["android", "desktop"],
+      "expected": "Solicita senha e converte com senha correta"
+    },
+    {
+      "id": "pdf-scanned-ocr",
+      "input": "input/pdf/pdf_escaneado_ocr.pdf",
+      "feature": "PDF_TO_DOCX",
+      "platforms": ["android", "desktop"],
+      "expected": "DOCX com texto reconhecido por OCR quando OCR estiver configurado"
+    },
+    {
+      "id": "pdf-simple-table",
+      "input": "input/pdf/pdf_tabela_simples.pdf",
+      "feature": "PDF_TO_DOCX",
+      "platforms": ["android", "desktop"],
+      "expected": "DOCX com tabela simples quando o texto tiver colunas detectaveis"
+    },
+    {
+      "id": "pdf-image-embedded",
+      "input": "input/pdf/pdf_com_imagem.pdf",
+      "feature": "PDF_TO_DOCX",
+      "platforms": ["desktop"],
+      "expected": "DOCX com imagem extraida"
+    },
+    {
+      "id": "docx-libreoffice",
+      "input": "input/docx/documento_formatado.docx",
+      "feature": "DOCX_TO_PDF",
+      "platforms": ["desktop"],
+      "expected": "PDF preservando layout via LibreOffice"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+# Local workspace files
+.idea/
+.local/
+.tools/
+.vscode/
+*.iml
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Java / Maven / Gradle / Android builds
+target/
+build/
+**/target/
+**/build/
+.gradle/
+**/.gradle/
+*.jar
+*.apk
+*.aab
+
+# Machine-specific Android config
+local.properties
+**/local.properties
+cp.txt
+**/cp.txt
+desktop/history/
+**/desktop/history/
+
+# Secrets and signing material
+*.jks
+*.keystore
+*.pfx
+*.p12
+android/keystore/*.properties
+android/keystore/*.jks
