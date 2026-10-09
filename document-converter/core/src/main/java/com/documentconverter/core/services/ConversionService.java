@@ -84,14 +84,6 @@ public class ConversionService {
                                          String imageFormat, int dpi,
                                          BiConsumer<Integer, Integer> progressCallback)
             throws IOException {
-        return convertPdfToImages(pdfFile, outputDir, imageFormat, dpi, progressCallback, null);
-    }
-
-    public List<File> convertPdfToImages(File pdfFile, File outputDir,
-                                         String imageFormat, int dpi,
-                                         BiConsumer<Integer, Integer> progressCallback,
-                                         String password)
-            throws IOException {
         validateInputFile(pdfFile);
         validateOutputDir(outputDir);
 
@@ -99,7 +91,7 @@ public class ConversionService {
                 new Object[]{imageFormat.toUpperCase(), dpi, pdfFile.getAbsolutePath(),
                         outputDir.getAbsolutePath()});
 
-        List<File> generatedImages = pdfToImageService.convert(pdfFile, outputDir, imageFormat, dpi, progressCallback, password);
+        List<File> generatedImages = pdfToImageService.convert(pdfFile, outputDir, imageFormat, dpi, progressCallback);
 
         LOGGER.log(Level.INFO, "{0} imagem(ns) gerada(s) em: {1}",
                 new Object[]{generatedImages.size(), outputDir.getAbsolutePath()});
@@ -128,17 +120,13 @@ public class ConversionService {
      * @return Task com métricas da conversão
      */
     public PdfToDocxResult convertPdfToDocx(File pdfFile, File outputFile) throws IOException {
-        return convertPdfToDocx(pdfFile, outputFile, null);
-    }
-
-    public PdfToDocxResult convertPdfToDocx(File pdfFile, File outputFile, String password) throws IOException {
         validateInputFile(pdfFile);
         validateOutputFile(outputFile);
         if (!pdfFile.getName().toLowerCase().endsWith(".pdf")) {
             throw new IllegalArgumentException("Formato inválido. Selecione um arquivo .pdf.");
         }
 
-        return pdfToDocxConverter.convert(pdfFile, outputFile, password);
+        return pdfToDocxConverter.convert(pdfFile, outputFile);
     }
 
     /**

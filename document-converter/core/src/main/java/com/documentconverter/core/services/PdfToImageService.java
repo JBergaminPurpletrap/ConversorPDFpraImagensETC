@@ -44,19 +44,12 @@ public class PdfToImageService {
     public List<File> convert(File pdfFile, File outputDir, String imageFormat, int dpi,
                               BiConsumer<Integer, Integer> progressCallback)
             throws IOException {
-        return convert(pdfFile, outputDir, imageFormat, dpi, progressCallback, null);
-    }
-
-    public List<File> convert(File pdfFile, File outputDir, String imageFormat, int dpi,
-                              BiConsumer<Integer, Integer> progressCallback,
-                              String password)
-            throws IOException {
 
         long startTime = System.currentTimeMillis();
 
         LOGGER.log(Level.INFO, "PDF carregado: {0}", pdfFile.getAbsolutePath());
 
-        List<File> result = converter.convert(pdfFile, outputDir, imageFormat, dpi, progressCallback, password);
+        List<File> result = converter.convert(pdfFile, outputDir, imageFormat, dpi, progressCallback);
 
         long elapsed = System.currentTimeMillis() - startTime;
         LOGGER.log(Level.INFO,

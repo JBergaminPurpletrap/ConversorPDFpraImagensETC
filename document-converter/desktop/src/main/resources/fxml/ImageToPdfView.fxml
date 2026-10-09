@@ -11,7 +11,7 @@
 <?import javafx.scene.text.Font?>
 
 <VBox spacing="12" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.documentconverter.desktop.ui.screens.converter.ImageToPdfController">
+      fx:controller="com.documentconverter.desktop.javafx.controller.ImageToPdfController">
 
     <padding>
         <Insets top="20" right="20" bottom="20" left="20"/>
@@ -27,7 +27,7 @@
 
     <Label text="Converta imagens JPG, JPEG ou PNG em um PDF multipágina" styleClass="subtitle-label"/>
 
-    <Label styleClass="separator-line"/>
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;"/>
 
     <!-- Arquivos selecionados -->
     <Label text="Arquivos selecionados:" styleClass="section-label">
@@ -50,7 +50,7 @@
 
     <ListView fx:id="lstFiles" maxHeight="120" visible="false" managed="false"/>
 
-    <Label styleClass="separator-line"/>
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;"/>
 
     <!-- Converter -->
     <Button fx:id="btnConvert" text="Converter para PDF" onAction="#onConvert"

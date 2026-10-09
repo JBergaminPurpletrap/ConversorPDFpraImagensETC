@@ -1,8 +1,5 @@
 # Document Converter - Documentacao do Estado Atual
 
-> Observacao: o status funcional mais atualizado por plataforma esta em `docs/features-status.md`.
-> Este documento foi mantido como historico consolidado do projeto.
-
 ## Visao Geral
 
 O Document Converter e um projeto de conversao de documentos com duas frentes no momento:
@@ -270,8 +267,7 @@ Limitacoes:
 
 - Layout complexo pode ser perdido.
 - Tabelas complexas podem nao ser reconstruidas perfeitamente.
-- No desktop/core, PDFs digitalizados sem texto pesquisavel ainda exigem OCR externo.
-- No Android, PDF para DOCX usa OCR experimental com ML Kit quando a pagina nao possui texto selecionavel.
+- PDFs digitalizados sem OCR tendem a gerar pouco ou nenhum texto.
 - PDF protegido por senha pode falhar.
 
 ### Historico
@@ -498,10 +494,9 @@ docs/android-poc-results.md
 
 - DOCX para PDF depende do LibreOffice instalado.
 - PDF para DOCX nao preserva layout complexo perfeitamente.
-- PDF para DOCX no desktop ainda nao possui OCR embutido.
-- PDF para DOCX no Android possui OCR experimental para texto latino usando ML Kit.
+- PDFs digitalizados exigiriam OCR, que ainda nao foi implementado.
 - Historico usa JSON local simples, nao banco de dados.
-- O core possui testes unitarios basicos para conversoes principais; ainda faltam testes amplos com arquivos reais.
+- Nao ha suite de testes automatizados real; `mvn test` valida compilacao, mas nao ha testes unitarios cadastrados.
 
 ### Android POC
 

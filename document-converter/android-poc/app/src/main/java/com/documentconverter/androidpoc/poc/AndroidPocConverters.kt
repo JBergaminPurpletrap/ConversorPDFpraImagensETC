@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
-import android.provider.OpenableColumns
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
@@ -24,90 +23,37 @@ class AndroidPocConverters(private val context: Context) {
 
     private val resolver = context.contentResolver
 
-    fun imagesToPdf(
-        imageUris: List<Uri>,
-        outputPdfUri: Uri,
-        progressCallback: (currentImage: Int, totalImages: Int) -> Unit = { _, _ -> }
-    ): PocResult {
+    fun imageToPdf(imageUri: Uri, outputPdfUri: Uri): PocResult {
         val start = System.currentTimeMillis()
-        if (imageUris.isEmpty()) {
-            return PocResult.failure("Nenhuma imagem selecionada.")
+        val bitmap = resolver.openInputStream(imageUri).use { input ->
+            requireNotNull(input) { "Nao foi possivel abrir a imagem." }
+            BitmapFactory.decodeStream(input)
+                ?: throw IllegalArgumentException("Imagem invalida ou nao suportada.")
         }
 
         val document = PdfDocument()
-        var pageNumber = 0
-        return try {
-            imageUris.forEachIndexed { index, imageUri ->
-                val currentImage = index + 1
-                progressCallback(currentImage, imageUris.size)
-                Log.i(TAG, "Adicionando imagem $currentImage de ${imageUris.size}: $imageUri")
-
-                val bitmap = decodeImageForPdf(imageUri)
-                try {
-                    pageNumber++
-                    val pageInfo = PdfDocument.PageInfo.Builder(
-                        bitmap.width,
-                        bitmap.height,
-                        pageNumber
-                    ).create()
-                    val page = document.startPage(pageInfo)
-                    page.canvas.drawColor(Color.WHITE)
-                    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                    document.finishPage(page)
-                } finally {
-                    bitmap.recycle()
-                }
-            }
+        try {
+            val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
+            val page = document.startPage(pageInfo)
+            page.canvas.drawColor(Color.WHITE)
+            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+            document.finishPage(page)
 
             resolver.openOutputStream(outputPdfUri, "w").use { output ->
                 requireNotNull(output) { "Nao foi possivel abrir o destino PDF." }
                 document.writeTo(output)
             }
-
-            val elapsed = System.currentTimeMillis() - start
-            PocResult.success(
-                message = "PDF criado com sucesso com ${imageUris.size} imagem(ns).",
-                elapsedMs = elapsed,
-                details = "Uma imagem por pagina. Ordem mantida conforme retorno do seletor SAF."
-            )
-        } catch (error: OutOfMemoryError) {
-            Log.e(TAG, "Memoria insuficiente ao criar PDF de imagens.", error)
-            PocResult.failure(
-                message = "Imagem grande demais para a memoria disponivel.",
-                details = "A POC processa uma imagem por vez e limita o bitmap, mas a imagem ainda excedeu a memoria."
-            )
-        } catch (error: Throwable) {
-            Log.e(TAG, "Falha em Imagem -> PDF.", error)
-            PocResult.failure(
-                message = "Falha ao criar PDF com imagens.",
-                details = error.message ?: error::class.java.simpleName
-            )
         } finally {
             document.close()
         }
-    }
 
-    fun imageToPdf(imageUri: Uri, outputPdfUri: Uri): PocResult {
-        return imagesToPdf(listOf(imageUri), outputPdfUri)
-    }
-
-    fun inspectPdf(pdfUri: Uri): PdfInspectionResult {
-        try {
-            val descriptor = resolver.openFileDescriptor(pdfUri, "r")
-                ?: return PdfInspectionResult.Error("Nao foi possivel abrir o PDF.")
-            descriptor.use { safeDescriptor ->
-                PdfRenderer(safeDescriptor).use { renderer ->
-                    return PdfInspectionResult.Readable(renderer.pageCount)
-                }
-            }
-        } catch (error: Throwable) {
-            Log.w(TAG, "Falha ao inspecionar PDF.", error)
-            return if (isPasswordProtectedError(error)) {
-                PdfInspectionResult.PasswordProtected
-            } else {
-                PdfInspectionResult.Error(error.message ?: error::class.java.simpleName)
-            }
-        }
+        bitmap.recycle()
+        val elapsed = System.currentTimeMillis() - start
+        return PocResult.success(
+            message = "Imagem convertida para PDF usando PdfDocument.",
+            elapsedMs = elapsed,
+            details = "Entrada via ContentResolver/Uri. Saida via SAF/Uri."
+        )
     }
 
     fun pdfToImages(
@@ -210,18 +156,6 @@ class AndroidPocConverters(private val context: Context) {
         )
     }
 
-    fun displayName(uri: Uri): String {
-        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null).use { cursor ->
-            if (cursor != null && cursor.moveToFirst()) {
-                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (index >= 0) {
-                    return cursor.getString(index)
-                }
-            }
-        }
-        return uri.lastPathSegment ?: uri.toString()
-    }
-
     private inline fun ParcelFileDescriptor.usePdfRenderer(block: (PdfRenderer) -> Unit) {
         use { descriptor ->
             PdfRenderer(descriptor).use(block)
@@ -235,37 +169,6 @@ class AndroidPocConverters(private val context: Context) {
         val height = (page.height * scale).roundToInt().coerceAtLeast(1)
         Log.d(TAG, "Renderizando pagina em bitmap ${width}x$height")
         return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    }
-
-    private fun decodeImageForPdf(uri: Uri): Bitmap {
-        val bounds = BitmapFactory.Options().apply {
-            inJustDecodeBounds = true
-        }
-        resolver.openInputStream(uri).use { input ->
-            requireNotNull(input) { "Nao foi possivel abrir a imagem." }
-            BitmapFactory.decodeStream(input, null, bounds)
-        }
-
-        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
-            throw IllegalArgumentException("Imagem invalida ou nao suportada: $uri")
-        }
-
-        val largestSide = maxOf(bounds.outWidth, bounds.outHeight)
-        var sampleSize = 1
-        while (largestSide / sampleSize > MAX_RENDER_SIDE) {
-            sampleSize *= 2
-        }
-
-        val options = BitmapFactory.Options().apply {
-            inSampleSize = sampleSize
-            inPreferredConfig = Bitmap.Config.ARGB_8888
-        }
-
-        return resolver.openInputStream(uri).use { input ->
-            requireNotNull(input) { "Nao foi possivel reabrir a imagem." }
-            BitmapFactory.decodeStream(input, null, options)
-                ?: throw IllegalArgumentException("Falha ao decodificar imagem: $uri")
-        }
     }
 
     private fun createOutputImage(
@@ -295,12 +198,6 @@ class AndroidPocConverters(private val context: Context) {
     ) {
         PNG("png", "image/png", Bitmap.CompressFormat.PNG, 100),
         JPG("jpg", "image/jpeg", Bitmap.CompressFormat.JPEG, 92)
-    }
-
-    sealed class PdfInspectionResult {
-        data class Readable(val pageCount: Int) : PdfInspectionResult()
-        data object PasswordProtected : PdfInspectionResult()
-        data class Error(val message: String) : PdfInspectionResult()
     }
 
     @Suppress("unused")

@@ -27,9 +27,9 @@ android-poc/
 | Area | Biblioteca / API | Status na POC |
 | --- | --- | --- |
 | UI | Kotlin + Jetpack Compose + Material 3 | Usado na tela simples da POC |
-| Selecao de arquivos | Storage Access Framework via `ActivityResultContracts.OpenDocument`, `OpenMultipleDocuments` e `OpenDocumentTree` | Usado |
+| Selecao de arquivos | Storage Access Framework via `ActivityResultContracts.OpenDocument` | Usado |
 | Escrita de arquivos | `ActivityResultContracts.CreateDocument` + `ContentResolver` | Usado |
-| Imagem para PDF | `BitmapFactory`, `Bitmap`, `PdfDocument` | Implementado com multiplas imagens |
+| Imagem para PDF | `BitmapFactory`, `Bitmap`, `PdfDocument` | Implementado |
 | PDF para imagem | `PdfRenderer`, `Bitmap`, `Bitmap.compress`, `DocumentFile` | Implementado como alternativa Android-native multipagina |
 | DOCX probe | Apache POI `poi-ooxml` | Incluido para teste minimo de abertura |
 | DOCX para PDF | Nenhuma conversao final | Nao implementado nesta POC |
@@ -45,31 +45,25 @@ Implementado em:
 android-poc/app/src/main/java/com/documentconverter/androidpoc/poc/AndroidPocConverters.kt
 ```
 
-Fluxo atualizado:
+Fluxo:
 
-1. Usuario seleciona uma ou varias imagens via SAF com `OpenMultipleDocuments`.
-2. App aceita `image/jpeg`, `image/png` e `image/webp`.
-3. App exibe quantidade e lista simples de imagens selecionadas.
-4. App salva o PDF via `CreateDocument`.
-5. App abre uma imagem por vez com `ContentResolver.openInputStream`.
-6. App decodifica com `BitmapFactory.decodeStream` usando limite de tamanho.
-7. App cria uma pagina por imagem com `android.graphics.pdf.PdfDocument`.
-8. App recicla o bitmap antes de processar a proxima imagem.
-9. App salva em URI escolhida pelo usuario via `ContentResolver.openOutputStream`.
+1. Usuario seleciona imagem via SAF.
+2. App abre a imagem com `ContentResolver.openInputStream`.
+3. App decodifica com `BitmapFactory.decodeStream`.
+4. App cria PDF com `android.graphics.pdf.PdfDocument`.
+5. App salva em URI escolhida pelo usuario via `ContentResolver.openOutputStream`.
 
 Resultado esperado em dispositivo Android:
 
 - Deve funcionar para imagens comuns suportadas pelo Android.
-- Gera PDF multipagina com uma imagem por pagina.
-- Mantem a ordem retornada pelo seletor SAF.
-- Exibe progresso `Imagem X de Y`.
+- Preserva a imagem em uma pagina PDF.
 - Nao usa PDFBox, AWT, ImageIO, JavaFX, LibreOffice ou `File` direto.
 
 Limites:
 
+- Ainda nao faz paginacao multipla.
 - Imagens muito grandes podem consumir memoria.
 - A pagina PDF usa o tamanho do bitmap original.
-- A ordem final depende da ordem retornada pelo seletor de documentos do Android.
 
 ### 2. PDF para Imagem
 
@@ -116,21 +110,12 @@ Melhorias para arquivo grande:
 
 Tratamento de PDF protegido:
 
-- A POC inspeciona o PDF selecionado com `PdfRenderer`.
-- Se detectar senha/criptografia/protecao, exibe popup:
+- A POC captura erros de senha/criptografia/protecao.
+- Mensagem exibida:
 
 ```text
-Titulo: PDF protegido
-Mensagem: Este PDF esta protegido por senha. Digite a senha para tentar abrir.
-Campo: Senha
-Botoes: Cancelar / Confirmar
+Este PDF esta protegido por senha. A versao Android ainda nao suporta PDFs protegidos.
 ```
-
-Limitacao:
-
-- `PdfRenderer` nativo do Android nao oferece API para informar senha.
-- O campo de senha fica informativo nesta POC.
-- Ao confirmar, a POC exibe mensagem amigavel dizendo que desbloqueio de PDF protegido ainda nao e suportado.
 
 ### 3. DOCX para PDF / Apache POI
 
@@ -201,19 +186,19 @@ Observacao:
 
 Resultados informados:
 
-- Imagem -> PDF: nao funcionou corretamente porque permitia selecionar apenas uma imagem.
-- PDF -> Imagem: funcionou.
+- Imagem -> PDF: funcionou.
+- PDF -> Imagem: funcionou parcialmente no teste inicial.
 - DOCX simples: nao funcionou.
 - PDF protegido: nao abriu por exigir senha.
-- Arquivo grande: funcionou.
+- Arquivo grande: nao funcionou.
+- Erro principal: PDF -> Imagem convertia apenas a primeira pagina.
 
 Acao tomada:
 
-- Imagem -> PDF foi corrigido para selecao multipla e PDF multipagina.
-- PDF -> Imagem permanece multipagina e funcionando.
+- PDF -> Imagem foi corrigido para multipagina.
 - DOCX foi removido do escopo do MVP Android inicial.
-- PDF protegido ganhou popup informativo com campo de senha.
-- Desbloqueio real de PDF protegido segue como limitacao tecnica do `PdfRenderer`.
+- PDF protegido foi documentado como limitacao conhecida.
+- Arquivo grande recebeu melhorias de memoria/logs, mas ainda precisa de novo teste real.
 
 ### Build Android local
 

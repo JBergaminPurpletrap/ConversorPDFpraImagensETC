@@ -14,14 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,13 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.documentconverter.androidpoc.poc.AndroidPocConverters
 import com.documentconverter.androidpoc.poc.PocResult
 import com.documentconverter.androidpoc.poc.AndroidPocConverters.ImageFormat
-import com.documentconverter.androidpoc.poc.AndroidPocConverters.PdfInspectionResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,12 +50,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun PocScreen(converters: AndroidPocConverters) {
     val scope = rememberCoroutineScope()
-    var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    var selectedImageNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedImage by remember { mutableStateOf<Uri?>(null) }
     var selectedPdf by remember { mutableStateOf<Uri?>(null) }
-    var selectedPdfIsProtected by remember { mutableStateOf(false) }
-    var showProtectedPdfDialog by remember { mutableStateOf(false) }
-    var protectedPdfPassword by remember { mutableStateOf("") }
     var lastResult by remember {
         mutableStateOf(
             PocResult.info(
@@ -88,30 +78,23 @@ private fun PocScreen(converters: AndroidPocConverters) {
         }
     }
 
-    val supportedImageTypes = arrayOf("image/jpeg", "image/png", "image/webp")
-
     val imagePicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenMultipleDocuments()
-    ) { uris ->
-        selectedImages = uris
-        selectedImageNames = uris.map { uri -> converters.displayName(uri) }
-        lastResult = if (uris.isNotEmpty()) {
-            PocResult.info("${uris.size} imagem(ns) selecionada(s). Agora escolha onde salvar o PDF.")
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        selectedImage = uri
+        lastResult = if (uri != null) {
+            PocResult.info("Imagem selecionada. Agora escolha onde salvar o PDF.")
         } else {
-            PocResult.info("Selecao de imagens cancelada.")
+            PocResult.info("Selecao de imagem cancelada.")
         }
     }
 
     val pdfCreator = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/pdf")
     ) { uri ->
-        val imageUris = selectedImages
-        if (imageUris.isNotEmpty() && uri != null) {
-            runTest { progress ->
-                converters.imagesToPdf(imageUris, uri) { currentImage, totalImages ->
-                    progress("Imagem $currentImage de $totalImages")
-                }
-            }
+        val imageUri = selectedImage
+        if (imageUri != null && uri != null) {
+            runTest { _ -> converters.imageToPdf(imageUri, uri) }
         } else {
             lastResult = PocResult.info("Destino PDF nao selecionado.")
         }
@@ -121,40 +104,10 @@ private fun PocScreen(converters: AndroidPocConverters) {
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         selectedPdf = uri
-        selectedPdfIsProtected = false
-        protectedPdfPassword = ""
-        if (uri != null) {
-            lastResult = PocResult.info("PDF selecionado. Verificando protecao e quantidade de paginas...")
-            scope.launch {
-                val inspection = withContext(Dispatchers.IO) {
-                    converters.inspectPdf(uri)
-                }
-                when (inspection) {
-                    is PdfInspectionResult.Readable -> {
-                        lastResult = PocResult.info(
-                            "PDF selecionado com ${inspection.pageCount} pagina(s). Agora escolha a pasta de destino."
-                        )
-                    }
-
-                    PdfInspectionResult.PasswordProtected -> {
-                        selectedPdfIsProtected = true
-                        showProtectedPdfDialog = true
-                        lastResult = PocResult.failure(
-                            "Este PDF esta protegido por senha."
-                        )
-                    }
-
-                    is PdfInspectionResult.Error -> {
-                        selectedPdf = null
-                        lastResult = PocResult.failure(
-                            "Nao foi possivel abrir o PDF selecionado.",
-                            details = inspection.message
-                        )
-                    }
-                }
-            }
+        lastResult = if (uri != null) {
+            PocResult.info("PDF selecionado. Agora escolha a pasta para salvar todas as paginas.")
         } else {
-            lastResult = PocResult.info("Selecao de PDF cancelada.")
+            PocResult.info("Selecao de PDF cancelada.")
         }
     }
 
@@ -205,36 +158,16 @@ private fun PocScreen(converters: AndroidPocConverters) {
 
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { imagePicker.launch(supportedImageTypes) }
+            onClick = { imagePicker.launch(arrayOf("image/*")) }
         ) {
-            Text("1. Selecionar imagens")
+            Text("1. Selecionar imagem")
         }
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            enabled = selectedImages.isNotEmpty(),
+            enabled = selectedImage != null,
             onClick = { pdfCreator.launch("imagem_android_poc.pdf") }
         ) {
-            Text("Gerar PDF multipagina com imagens")
-        }
-        if (selectedImageNames.isNotEmpty()) {
-            Text(
-                text = "Selecionadas: ${selectedImageNames.size}",
-                style = MaterialTheme.typography.titleSmall
-            )
-            selectedImageNames.take(8).forEachIndexed { index, name ->
-                Text(
-                    text = "${index + 1}. $name",
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            if (selectedImageNames.size > 8) {
-                Text(
-                    text = "... e mais ${selectedImageNames.size - 8}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            Text("Gerar PDF da imagem")
         }
 
         Button(
@@ -245,7 +178,7 @@ private fun PocScreen(converters: AndroidPocConverters) {
         }
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            enabled = selectedPdf != null && !selectedPdfIsProtected,
+            enabled = selectedPdf != null,
             onClick = { outputFolderPicker.launch(null) }
         ) {
             Text("Renderizar todas as paginas em PNG")
@@ -276,46 +209,6 @@ private fun PocScreen(converters: AndroidPocConverters) {
         }
 
         ResultPanel(result = lastResult)
-    }
-
-    if (showProtectedPdfDialog) {
-        AlertDialog(
-            onDismissRequest = { showProtectedPdfDialog = false },
-            title = { Text("PDF protegido") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Este PDF esta protegido por senha. Digite a senha para tentar abrir.")
-                    TextField(
-                        value = protectedPdfPassword,
-                        onValueChange = { protectedPdfPassword = it },
-                        label = { Text("Senha") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true
-                    )
-                    Text(
-                        text = "Limitacao: PdfRenderer nativo do Android nao oferece API para desbloquear PDFs protegidos por senha. Nesta POC, a senha ainda nao pode ser usada para converter.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showProtectedPdfDialog = false
-                        lastResult = PocResult.failure(
-                            "Este PDF esta protegido por senha. A versao Android ainda nao suporta desbloqueio de PDF protegido."
-                        )
-                    }
-                ) {
-                    Text("Confirmar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showProtectedPdfDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
     }
 }
 

@@ -10,7 +10,7 @@
 <?import javafx.scene.text.Font?>
 
 <VBox spacing="12" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.documentconverter.desktop.ui.screens.converter.PdfToDocxController">
+      fx:controller="com.documentconverter.desktop.javafx.controller.PdfToDocxController">
 
     <padding>
         <Insets top="20" right="20" bottom="20" left="20"/>
@@ -25,7 +25,7 @@
 
     <Label text="Extraia texto e imagens de PDFs para um documento Word" styleClass="subtitle-label"/>
 
-    <Label styleClass="separator-line"/>
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;"/>
 
     <Label text="Arquivo PDF:" styleClass="section-label">
         <font><Font size="13" name="System Bold"/></font>
@@ -44,7 +44,7 @@
         <Label text="ou clique para selecionar" styleClass="drop-hint"/>
     </VBox>
 
-    <Label styleClass="separator-line"/>
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;"/>
 
     <Button fx:id="btnConvert" text="Converter para DOCX" onAction="#onConvert"
             disable="true" minWidth="200" maxWidth="Infinity" alignment="CENTER">

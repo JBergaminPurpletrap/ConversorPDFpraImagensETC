@@ -45,7 +45,7 @@ public class PdfToImageConverter {
      */
     public List<File> convert(File pdfFile, File outputDir, String imageFormat, int dpi)
             throws IOException {
-        return convert(pdfFile, outputDir, imageFormat, dpi, null, null);
+        return convert(pdfFile, outputDir, imageFormat, dpi, null);
     }
 
     /**
@@ -61,13 +61,6 @@ public class PdfToImageConverter {
      */
     public List<File> convert(File pdfFile, File outputDir, String imageFormat,
                               int dpi, BiConsumer<Integer, Integer> progressCallback)
-            throws IOException {
-        return convert(pdfFile, outputDir, imageFormat, dpi, progressCallback, null);
-    }
-
-    public List<File> convert(File pdfFile, File outputDir, String imageFormat,
-                              int dpi, BiConsumer<Integer, Integer> progressCallback,
-                              String password)
             throws IOException {
 
         // Valida extensão
@@ -94,7 +87,7 @@ public class PdfToImageConverter {
 
         List<File> generatedImages = new ArrayList<>();
 
-        try (PDDocument document = loadPdf(pdfFile, password)) {
+        try (PDDocument document = Loader.loadPDF(pdfFile)) {
             int totalPages = document.getNumberOfPages();
             if (totalPages == 0) {
                 throw new IOException("O PDF não contém nenhuma página.");
@@ -164,13 +157,6 @@ public class PdfToImageConverter {
     public List<File> convert(File pdfFile, File outputDir, String imageFormat)
             throws IOException {
         return convert(pdfFile, outputDir, imageFormat, DEFAULT_DPI, null);
-    }
-
-    private PDDocument loadPdf(File pdfFile, String password) throws IOException {
-        if (password == null || password.isBlank()) {
-            return Loader.loadPDF(pdfFile);
-        }
-        return Loader.loadPDF(pdfFile, password);
     }
 
     /**

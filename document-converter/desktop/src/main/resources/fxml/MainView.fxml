@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Font?>
 
 <VBox spacing="12" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.documentconverter.desktop.ui.screens.converter.MainController">
+      fx:controller="com.documentconverter.desktop.javafx.controller.MainController">
 
     <padding>
         <Insets top="20" right="20" bottom="20" left="20"/>
@@ -32,7 +32,7 @@
     </Label>
 
     <!-- Separador visual -->
-    <Label styleClass="separator-line" />
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;" />
 
     <!-- Seção: Imagens selecionadas -->
     <Label text="Arquivos selecionados:" styleClass="section-label">
@@ -70,7 +70,7 @@
     <ComboBox fx:id="cmbDpi" visible="false" managed="false" maxWidth="Infinity"/>
 
     <!-- Seção: Conversão -->
-    <Label styleClass="separator-line" />
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;" />
 
     <Button fx:id="btnConvert" text="Converter" onAction="#onConvert"
             minWidth="150" maxWidth="200" alignment="CENTER">

@@ -11,7 +11,7 @@
 <?import javafx.scene.text.Font?>
 
 <VBox spacing="12" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.documentconverter.desktop.ui.screens.converter.PdfToImageController">
+      fx:controller="com.documentconverter.desktop.javafx.controller.PdfToImageController">
 
     <padding>
         <Insets top="20" right="20" bottom="20" left="20"/>
@@ -27,7 +27,7 @@
 
     <Label text="Converta cada página de um PDF em imagens JPG ou PNG" styleClass="subtitle-label"/>
 
-    <Label styleClass="separator-line"/>
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;"/>
 
     <!-- Arquivo PDF -->
     <Label text="Arquivo PDF:" styleClass="section-label">
@@ -60,7 +60,7 @@
     </Label>
     <ComboBox fx:id="cmbDpi" maxWidth="Infinity"/>
 
-    <Label styleClass="separator-line"/>
+    <Label style="-fx-border-color: #cccccc; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;"/>
 
     <!-- Converter -->
     <Button fx:id="btnConvert" text="Converter para Imagens" onAction="#onConvert"

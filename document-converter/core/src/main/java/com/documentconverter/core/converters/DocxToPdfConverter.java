@@ -4,12 +4,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -121,9 +119,6 @@ public class DocxToPdfConverter {
 
     private File findLibreOfficeExecutable() throws IOException {
         List<File> candidates = new ArrayList<>();
-        addCandidate(candidates, System.getProperty("documentconverter.libreoffice.path"));
-        addCandidate(candidates, System.getenv("LIBREOFFICE_PATH"));
-
         String libreOfficeHome = System.getenv("LIBREOFFICE_HOME");
         if (libreOfficeHome != null && !libreOfficeHome.isBlank()) {
             candidates.add(new File(libreOfficeHome, "program/soffice.exe"));
@@ -132,9 +127,6 @@ public class DocxToPdfConverter {
 
         candidates.add(new File("C:/Program Files/LibreOffice/program/soffice.exe"));
         candidates.add(new File("C:/Program Files (x86)/LibreOffice/program/soffice.exe"));
-        candidates.add(new File(System.getProperty("user.home"), "AppData/Local/Programs/LibreOffice/program/soffice.exe"));
-        addBundledLibreOfficeCandidates(candidates);
-        candidates.addAll(findSofficeOnPath());
 
         for (File candidate : candidates) {
             if (candidate.exists() && candidate.isFile()) {
@@ -142,61 +134,7 @@ public class DocxToPdfConverter {
             }
         }
 
-        throw new IOException("LibreOffice não encontrado. Instale o LibreOffice ou configure o caminho do soffice.exe.");
-    }
-
-    private void addCandidate(List<File> candidates, String path) {
-        if (path == null || path.isBlank()) {
-            return;
-        }
-
-        File file = new File(path.trim());
-        if (file.isDirectory()) {
-            candidates.add(new File(file, "program/soffice.exe"));
-            candidates.add(new File(file, "soffice.exe"));
-        } else {
-            candidates.add(file);
-        }
-    }
-
-    private List<File> findSofficeOnPath() {
-        String path = System.getenv("PATH");
-        if (path == null || path.isBlank()) {
-            return List.of();
-        }
-
-        return Arrays.stream(path.split(File.pathSeparator))
-                .filter(entry -> entry != null && !entry.isBlank())
-                .map(entry -> new File(entry, "soffice.exe"))
-                .toList();
-    }
-
-    private void addBundledLibreOfficeCandidates(List<File> candidates) {
-        List<File> baseDirs = new ArrayList<>();
-        baseDirs.add(new File(System.getProperty("user.dir")));
-
-        try {
-            File codeLocation = new File(DocxToPdfConverter.class.getProtectionDomain()
-                    .getCodeSource()
-                    .getLocation()
-                    .toURI());
-            File codeDir = codeLocation.isFile() ? codeLocation.getParentFile() : codeLocation;
-            if (codeDir != null) {
-                baseDirs.add(codeDir);
-                File parent = codeDir.getParentFile();
-                if (parent != null) {
-                    baseDirs.add(parent);
-                }
-            }
-        } catch (URISyntaxException | SecurityException e) {
-            LOGGER.log(Level.FINE, "Não foi possível detectar diretório da aplicação para LibreOffice embutido.", e);
-        }
-
-        for (File baseDir : baseDirs) {
-            candidates.add(new File(baseDir, "libreoffice/program/soffice.exe"));
-            candidates.add(new File(baseDir, "LibreOffice/program/soffice.exe"));
-            candidates.add(new File(baseDir, "program/soffice.exe"));
-        }
+        throw new IOException("LibreOffice não encontrado. Instale o LibreOffice ou configure LIBREOFFICE_HOME.");
     }
 
     private String readProcessOutput(Process process) throws IOException {
